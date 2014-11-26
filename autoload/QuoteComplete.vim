@@ -25,15 +25,16 @@ endfunction
 function! QuoteComplete#Any( findstart, base )
     let l:anyFallback = g:QuoteComplete_Any
     if exists('b:QuoteComplete_Single') || exists('b:QuoteComplete_Double')
-	let l:single = ('QuoteComplete_Single', g:QuoteComplete_Single)
-	let l:double = ingo#plugin#setting#GetBufferLocal('QuoteComplete_Double', g:QuoteComplete_Double)
-	let l:anyFallback = [l:single[0] . '\|' . l:double[0], l:single[1] . '\|' . l:double[1]]
+	let l:anyFallback = [
+	\   ingo#plugin#setting#GetBufferLocal('QuoteComplete_Single', g:QuoteComplete_Single),
+	\   ingo#plugin#setting#GetBufferLocal('QuoteComplete_Double', g:QuoteComplete_Double)
+	\] + g:QuoteComplete_Any[2:]
     endif
 
     return s:Complete(ingo#plugin#setting#GetBufferLocal('QuoteComplete_Any', l:anyFallback), a:findstart, a:base)
 endfunction
 
-function! s:Complete( quoteConfig, findstart, base )
+function! s:Complete( quotes, findstart, base )
     if a:findstart
 	" Locate the start of the keyword.
 	let l:startCol = searchpos('\k*\%#', 'bn', line('.'))[1]
@@ -46,10 +47,22 @@ function! s:Complete( quoteConfig, findstart, base )
 	let l:matches = []
 	call CompleteHelper#Find(l:matches, function('QuoteComplete#FindQuotes'), {
 	\   'complete': s:GetCompleteOption(),
-	\   'base' : a:base,
-	\   'quoteExpr': a:quoteConfig[0],
-	\   'quotedStringExpr': a:quoteConfig[1]
+	\   'base' : '\V\^' . escape(a:quotes.char . a:base, '\'),
+	\   'quotes': a:quotes
 	\})
+
+	if empty(l:matches)
+	    echohl ModeMsg
+	    echo '-- User defined completion (^U^N^P) -- Anywhere search...'
+	    echohl None
+
+	    call CompleteHelper#Find(l:matches, function('QuoteComplete#FindQuotes'), {
+	    \   'complete': s:GetCompleteOption(),
+	    \   'base' : '\V' . escape(a:base, '\'),
+	    \   'quotes': a:quotes
+	    \})
+	endif
+
 	return l:matches
     endif
 endfunction
@@ -66,54 +79,36 @@ function! s:GetCurrentLines( options )
     return map(l:lnums, 'getline(v:val)')
 endfunction
 function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isInCompletionBuffer )
-    let l:lead = ''
-    let l:leadLen = strlen(l:lead)
+    for l:line in (empty(a:lines) ? s:GetCurrentLines(a:options) : a:lines)
+	let l:lineLen = len(l:line)
 
-    " now we need to search the buffer for strings!!!
-    for l:lineData in (empty(a:lines) ? s:GetCurrentLines(a:options) : a:lines)
-	let l:lineLen = strlen(l:lineData)
+	for l:quote in ingo#list#Make(a:options.quotes)
+	    let l:col = 0
 
-	let l:start = 0
-
-	while l:start < l:lineLen
-	    " find the first quote in the string
-	    let l:qPos = match(l:lineData, a:options.quoteExpr, l:start)
-
-	    " if nothing was found, nothing to do
-	    if l:qPos == -1
-		break
-	    endif
-
-	    let l:str = matchstr(l:lineData, a:options.quotedStringExpr, l:qPos)
-
-	    " if there was no string match (the string wasn't complete), then we
-	    " can't do anything more with this line
-	    if l:str == ''
-		break
-	    endif
-
-	    " look for the next string further on
-	    let l:start = l:qPos + strlen(l:str)
-
-	    " if we have a leadstring, then we need to make sure the lead matches too
-	    if l:leadLen && (strpart(l:str, 1, l:leadLen) != l:lead)
-		" if the string doesn't begin with 'lead' already in place, then it
-		" can't be used
-		continue
-	    endif
-
-	    " Don't allow strings of less than 1 contained character
-	    if strlen(l:str) > 3
-		if ! count(a:matches, l:str)
-		    let l:add = { 'word': l:str, 'icase': 0 }
-
-		    call add(a:matches, l:add)
-		    unlet l:add
+	    while l:col < l:lineLen
+		let l:quoteCol = match(l:line, l:quote.char, l:col)
+		if l:quoteCol == -1
+		    break
 		endif
-	    endif
-	endwhile
+
+		let l:quotedString = matchstr(l:line, l:quote.pattern, l:quoteCol)
+		if l:quotedString == ''
+		    break
+		endif
+
+		let l:col = l:quoteCol + len(l:quotedString)
+
+		if l:quotedString !~# a:options.base
+		    continue
+		endif
+
+		let l:matchObj = copy(a:matchTemplate)
+		call CompleteHelper#AddMatch(a:matches, l:matchObj, l:quotedString, a:options)
+	    endwhile
+	endfor
     endfor
 endfunction
+
 
 
 function! QuoteComplete#Expr( completionFunction )
