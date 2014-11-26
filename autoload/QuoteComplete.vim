@@ -1,4 +1,4 @@
-" QuoteComplete.vim: Insert mode completion of puoted strings.
+" QuoteComplete.vim: Insert mode completion of quoted strings.
 "
 " DEPENDENCIES:
 "
@@ -36,19 +36,49 @@ endfunction
 
 function! s:Complete( quotes, findstart, base )
     if a:findstart
-	" Locate the start of the keyword.
-	let l:startCol = searchpos('\k*\%#', 'bn', line('.'))[1]
+	" Locate the start of the quoted text (any possible quote) or keyword.
+	let l:quotesCharPatterns = map(
+	\   ingo#collections#Flatten1([
+	\       ingo#plugin#setting#GetBufferLocal('QuoteComplete_Single', g:QuoteComplete_Single),
+	\       ingo#plugin#setting#GetBufferLocal('QuoteComplete_Double', g:QuoteComplete_Double),
+	\       ingo#plugin#setting#GetBufferLocal('QuoteComplete_Any', g:QuoteComplete_Any),
+	\   ]),
+	\   'v:val.char'
+	\)
+	let [s:isStartWithQuote, s:isEndWithQuote] = [0, 0]
+	let l:startCol = searchpos('\%(\%(' . join(l:quotesCharPatterns, '\|') . '\).\{-}\|\k*\)\%#', 'bn', line('.'))[1]
 	if l:startCol == 0
 	    let l:startCol = col('.')
+	else
+	    let l:quotedBase = strpart(getline('.'), l:startCol - 1, (col('.') - l:startCol))
+	    let l:textAfterCursor = strpart(getline('.'), col('.') - 1)
+
+	    for l:pattern in l:quotesCharPatterns   " Test each pattern individually to be able to test with the same char pattern at the end; with this we can support different begin- and end- characters for a quote (e.g. typographical ones).
+		if l:quotedBase =~ '^' . l:pattern
+		    let s:isStartWithQuote = 1
+
+		    " Reduce the base to exclude the quote.
+		    let l:startCol += len(matchstr(l:quotedBase, l:pattern))
+
+		    if l:textAfterCursor =~ '^' . l:pattern
+			let s:isEndWithQuote = 1
+		    endif
+		    break
+		endif
+	    endfor
 	endif
 	return l:startCol - 1 " Return byte index, not column.
     else
 	" Find matches starting with a:base.
+echomsg '****' string(a:base) string(a:quotes) s:isStartWithQuote s:isEndWithQuote
+	let l:quotes = ingo#list#Make(a:quotes)
+	let l:base = '\V' . escape(a:base, '\')
+
 	let l:matches = []
 	call CompleteHelper#Find(l:matches, function('QuoteComplete#FindQuotes'), {
 	\   'complete': s:GetCompleteOption(),
-	\   'base' : '\V\^' . escape(a:quotes.char . a:base, '\'),
-	\   'quotes': a:quotes
+	\   'base' : '^\%(' . join(map(copy(l:quotes), 'v:val.char'), '\|') . '\)' . l:base,
+	\   'quotes': l:quotes
 	\})
 
 	if empty(l:matches)
@@ -58,8 +88,8 @@ function! s:Complete( quotes, findstart, base )
 
 	    call CompleteHelper#Find(l:matches, function('QuoteComplete#FindQuotes'), {
 	    \   'complete': s:GetCompleteOption(),
-	    \   'base' : '\V' . escape(a:base, '\'),
-	    \   'quotes': a:quotes
+	    \   'base' : l:base,
+	    \   'quotes': l:quotes
 	    \})
 	endif
 
@@ -82,7 +112,7 @@ function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isIn
     for l:line in (empty(a:lines) ? s:GetCurrentLines(a:options) : a:lines)
 	let l:lineLen = len(l:line)
 
-	for l:quote in ingo#list#Make(a:options.quotes)
+	for l:quote in a:options.quotes
 	    let l:col = 0
 
 	    while l:col < l:lineLen
@@ -100,6 +130,14 @@ function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isIn
 
 		if l:quotedString !~# a:options.base
 		    continue
+		endif
+
+		if s:isStartWithQuote
+		    let l:quotedString = matchstr(l:quotedString, '^\%(' . l:quote.char . '\)\zs.*\ze\%(' . l:quote.char . '\)$')
+
+		    let l:quotedString = matchstr(l:quotedString, '.*\ze\%(' . l:quote.char . '\)$')
+		    if s:isEndWithQuote
+		    endif
 		endif
 
 		let l:matchObj = copy(a:matchTemplate)
