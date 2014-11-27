@@ -37,15 +37,21 @@ endfunction
 function! s:Complete( quotes, findstart, base )
     if a:findstart
 	" Locate the start of the quoted text (any possible quote) or keyword.
+	let l:quotesConfig = ingo#collections#Flatten1([
+	\   ingo#plugin#setting#GetBufferLocal('QuoteComplete_Single', g:QuoteComplete_Single),
+	\   ingo#plugin#setting#GetBufferLocal('QuoteComplete_Double', g:QuoteComplete_Double),
+	\   ingo#plugin#setting#GetBufferLocal('QuoteComplete_Any', g:QuoteComplete_Any),
+	\])
 	let l:quotesCharPatterns = map(
-	\   ingo#collections#Flatten1([
-	\       ingo#plugin#setting#GetBufferLocal('QuoteComplete_Single', g:QuoteComplete_Single),
-	\       ingo#plugin#setting#GetBufferLocal('QuoteComplete_Double', g:QuoteComplete_Double),
-	\       ingo#plugin#setting#GetBufferLocal('QuoteComplete_Any', g:QuoteComplete_Any),
-	\   ]),
+	\   copy(l:quotesConfig),
 	\   'v:val.char'
 	\)
-	let [s:isStartWithQuote, s:isEndWithQuote] = [0, 0]
+	let l:quotesEndCharPatterns = map(
+	\   copy(l:quotesConfig),
+	\   's:GetEndChar(v:val)'
+	\)
+
+	let [s:isStartWithQuote, s:isEndWithQuote, s:baseQuote] = [0, 0, {}]
 	let l:startCol = searchpos('\%(\%(' . join(l:quotesCharPatterns, '\|') . '\).\{-}\|\k*\)\%#', 'bn', line('.'))[1]
 	if l:startCol == 0
 	    let l:startCol = col('.')
@@ -53,14 +59,16 @@ function! s:Complete( quotes, findstart, base )
 	    let l:quotedBase = strpart(getline('.'), l:startCol - 1, (col('.') - l:startCol))
 	    let l:textAfterCursor = strpart(getline('.'), col('.') - 1)
 
-	    for l:pattern in l:quotesCharPatterns   " Test each pattern individually to be able to test with the same char pattern at the end; with this we can support different begin- and end- characters for a quote (e.g. typographical ones).
+	    for l:idx in range(len(l:quotesCharPatterns))   " Test each pattern individually to be able to test with the same (end) char pattern at the end; with this we can support different begin- and end- characters for a quote (e.g. typographical ones).
+		let [l:pattern, l:endPattern] = [l:quotesCharPatterns[l:idx], l:quotesEndCharPatterns[l:idx]]
 		if l:quotedBase =~ '^' . l:pattern
 		    let s:isStartWithQuote = 1
+		    let s:baseQuote = l:quotesConfig[l:idx]
 
 		    " Reduce the base to exclude the quote.
 		    let l:startCol += len(matchstr(l:quotedBase, l:pattern))
 
-		    if l:textAfterCursor =~ '^' . l:pattern
+		    if l:textAfterCursor =~ '^' . l:endPattern
 			let s:isEndWithQuote = 1
 		    endif
 		    break
@@ -70,7 +78,7 @@ function! s:Complete( quotes, findstart, base )
 	return l:startCol - 1 " Return byte index, not column.
     else
 	" Find matches starting with a:base.
-echomsg '****' string(a:base) string(a:quotes) s:isStartWithQuote s:isEndWithQuote
+echomsg '****' string(a:base) string(a:quotes) s:isStartWithQuote s:isEndWithQuote string(s:baseQuote)
 	let l:quotes = ingo#list#Make(a:quotes)
 	let l:base = '\V' . escape(a:base, '\')
 
@@ -97,17 +105,6 @@ echomsg '****' string(a:base) string(a:quotes) s:isStartWithQuote s:isEndWithQuo
     endif
 endfunction
 
-function! s:GetCurrentLines( options )
-    let l:isBackward = (has_key(a:options, 'backward_search') ?
-	\  a:options.backward_search :
-	\  g:CompleteHelper_IsDefaultToBackwardSearch
-    \)
-    let l:lnums = (l:isBackward ?
-	\  range(line('.') - 1, 1, -1) + range(line('$'), line('.'), -1) :
-	\  range(line('.'), line('$')) + range(1, line('.') - 1)
-    \)
-    return map(l:lnums, 'getline(v:val)')
-endfunction
 function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isInCompletionBuffer )
     for l:line in (empty(a:lines) ? s:GetCurrentLines(a:options) : a:lines)
 	let l:lineLen = len(l:line)
@@ -135,8 +132,10 @@ function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isIn
 		if s:isStartWithQuote
 		    let l:quotedString = matchstr(l:quotedString, '^\%(' . l:quote.char . '\)\zs.*\ze\%(' . l:quote.char . '\)$')
 
-		    let l:quotedString = matchstr(l:quotedString, '.*\ze\%(' . l:quote.char . '\)$')
-		    if s:isEndWithQuote
+		    if ! s:isEndWithQuote
+			" The original end quote has been removed; add the
+			" configured end char for the actual match.
+			let l:quotedString .= s:GetEndChar(s:baseQuote)
 		    endif
 		endif
 
@@ -145,6 +144,20 @@ function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isIn
 	    endwhile
 	endfor
     endfor
+endfunction
+function! s:GetEndChar( quote )
+    return (has_key(a:quote, 'endChar') ? a:quote.endChar : a:quote.char)
+endfunction
+function! s:GetCurrentLines( options )
+    let l:isBackward = (has_key(a:options, 'backward_search') ?
+	\  a:options.backward_search :
+	\  g:CompleteHelper_IsDefaultToBackwardSearch
+    \)
+    let l:lnums = (l:isBackward ?
+	\  range(line('.') - 1, 1, -1) + range(line('$'), line('.'), -1) :
+	\  range(line('.'), line('$')) + range(1, line('.') - 1)
+    \)
+    return map(l:lnums, 'getline(v:val)')
 endfunction
 
 
