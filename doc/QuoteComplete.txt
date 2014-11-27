@@ -1,0 +1,100 @@
+*QuoteComplete.txt*     Insert mode completion of quoted strings.
+
+		       QUOTE COMPLETE    by Ingo Karkat
+							   *QuoteComplete.vim*
+description			|QuoteComplete-description|
+usage				|QuoteComplete-usage|
+installation			|QuoteComplete-installation|
+configuration			|QuoteComplete-configuration|
+integration			|QuoteComplete-integration|
+limitations			|QuoteComplete-limitations|
+known problems			|QuoteComplete-known-problems|
+todo				|QuoteComplete-todo|
+history				|QuoteComplete-history|
+
+==============================================================================
+DESCRIPTION					   *QuoteComplete-description*
+
+This plugin ...
+
+HOW IT WORKS								     *
+
+SOURCE									     *
+(Original Vim tip, Stack Overflow answer, ...)
+
+SEE ALSO								     *
+(Plugins offering complementary functionality, or plugins using this library.)
+
+RELATED WORKS								     *
+(Alternatives from other authors, other approaches, references not used here.)
+
+==============================================================================
+USAGE							 *QuoteComplete-usage*
+In insert mode, invoke the completion via CTRL-X ', CTRL-X ", CTRL-X `.
+You can then search forward and backward via CTRL-N / CTRL-P, as usual.
+
+								  *i_CTRL-X_'*
+CTRL-X '		Find matches for single-quoted strings starting with
+			(or at least containing somewhere as a fallback) the
+			text before the cursor, either up to a previous single
+			quote, or just the keyword before the cursor. Existing
+			quotes around the cursor will be kept and preferred
+			over the ones in the matched string.
+							      *i_CTRL-X_quote*
+CTRL-X "		Same, but for double-quoted strings.
+								  *i_CTRL-X_`*
+CTRL-X `		Same, but for any kind of quoted string.
+
+EXAMPLE						       *QuoteComplete-example*
+
+==============================================================================
+INSTALLATION					  *QuoteComplete-installation*
+
+This script is packaged as a |vimball|. If you have the "gunzip" decompressor
+in your PATH, simply edit the *.vmb.gz package in Vim; otherwise, decompress
+the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
+vimball or via the |:UseVimball| command. >
+    vim QuoteComplete*.vmb.gz
+    :so %
+To uninstall, use the |:RmVimball| command.
+
+DEPENDENCIES					  *QuoteComplete-dependencies*
+
+- Requires Vim 7.0 or higher.
+
+==============================================================================
+CONFIGURATION					 *QuoteComplete-configuration*
+
+For a permanent configuration, put the following commands into your |vimrc|:
+configvar
+							 *QuoteComplete-remap*
+plugmap
+
+==============================================================================
+INTEGRATION					   *QuoteComplete-integration*
+
+==============================================================================
+LIMITATIONS					   *QuoteComplete-limitations*
+
+KNOWN PROBLEMS					*QuoteComplete-known-problems*
+
+TODO							  *QuoteComplete-todo*
+
+IDEAS							 *QuoteComplete-ideas*
+
+==============================================================================
+HISTORY						       *QuoteComplete-history*
+
+GOAL
+First published version.
+
+0.01	27-Nov-2014
+Started development.
+
+==============================================================================
+Copyright: (C) 2014 Ingo Karkat
+The VIM LICENSE applies to this plugin; see |copyright|.
+
+Maintainer:	Ingo Karkat <ingo@karkat.de>
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
