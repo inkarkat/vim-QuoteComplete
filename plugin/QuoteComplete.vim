@@ -1,4 +1,4 @@
-" QuoteComplete.vim: Insert mode completion of puoted strings.
+" QuoteComplete.vim: Insert mode completion of quoted strings.
 "
 " DEPENDENCIES:
 "   - Requires Vim 7.0 or higher.
@@ -22,17 +22,17 @@ let g:loaded_QuoteComplete = 1
 
 if ! exists('g:QuoteComplete_complete')
     let g:QuoteComplete_complete = '.,w,b'
-    let g:QuoteComplete_complete = '.'
+    let g:QuoteComplete_complete = '.' "TODO
 endif
 
 if ! exists('g:QuoteComplete_Single')
-    let g:QuoteComplete_Single = ["'", '''\%(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\\.\|[^'']\)\{-}''']
+    let g:QuoteComplete_Single = {'char': "'", 'pattern': '''\%(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\\.\|[^'']\)\{-}'''}
 endif
 if ! exists('g:QuoteComplete_Double')
-    let g:QuoteComplete_Double = ['"', '"\%(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\\.\|[^"]\)\{-}"']
+    let g:QuoteComplete_Double = {'char': '"', 'pattern': '"\%(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\\.\|[^"]\)\{-}"'}
 endif
 if ! exists('g:QuoteComplete_Any')
-    let g:QuoteComplete_Any = ['[''"]', g:QuoteComplete_Single[1] . '\|' . g:QuoteComplete_Double[1]]
+    let g:QuoteComplete_Any = [g:QuoteComplete_Single, g:QuoteComplete_Double, {'char': '`', 'pattern': '`\%(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\\.\|[^`]\)\{-}`'}]
 endif
 
 
