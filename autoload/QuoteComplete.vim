@@ -14,6 +14,11 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"	002	01-Dec-2014	Change search logic in
+"				QuoteComplete#FindQuotes() to restart _all_
+"				quote searches after a quote was found. This
+"				avoids missing quotes when there are unbalanced
+"				quote chars inside another quote type.
 "	001	27-Nov-2014	file creation
 let s:save_cpo = &cpo
 set cpo&vim
@@ -84,9 +89,8 @@ function! s:Complete( quotes, findstart, base )
 	return l:startCol - 1 " Return byte index, not column.
     else
 	" Find matches starting with a:base.
-echomsg '****' string(getline('.')) string(a:base) string(a:quotes) s:isStartWithQuote s:isEndWithQuote string(s:baseQuote)
 	let l:quotes = ingo#list#Make(a:quotes)
-
+"****D echomsg '****' string(getline('.')) string(a:base) string(a:quotes) s:isStartWithQuote s:isEndWithQuote string(s:baseQuote)
 	let l:matches = []
 	call CompleteHelper#Find(l:matches, function('QuoteComplete#FindQuotes'), {
 	\   'complete': s:GetCompleteOption(),
@@ -112,14 +116,13 @@ endfunction
 
 function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isInCompletionBuffer )
     for l:line in (empty(a:lines) ? s:GetCurrentLines(a:options) : a:lines)
-	let l:lineLen = len(l:line)
 	let l:startCols = [0]
 	while ! empty(l:startCols)
 	    let l:startCol = remove(l:startCols, 0)
 	    for l:quote in a:options.quotes
 		let l:col = l:startCol
 
-		while l:col < l:lineLen
+		while 1
 		    let l:quoteCol = match(l:line, '\V' . l:quote.char, l:col)
 		    if l:quoteCol == -1
 			break
@@ -130,8 +133,18 @@ function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isIn
 			break
 		    endif
 
+		    " Restart the search for starting quotes after the current
+		    " quote match. As the iteration over the various quotes is
+		    " nested _inside_ this search, this means that _any_ quotes
+		    " are reconsidered. If we would just process each quote type
+		    " one after the other sequentially, we would miss matches
+		    " obscured by an unbalanced quote character contained in
+		    " another quote, e.g. "O'Brian", 'foo'. The single-quoted
+		    " search sees 'Brian", ', whereas the any-search
+		    " (additionally) sees 'foo'.
 		    let l:col = l:quoteCol + len(l:quotedString)
 		    call add(l:startCols, l:col)
+
 		    if l:quotedString !~# a:options.base
 			break
 		    endif
