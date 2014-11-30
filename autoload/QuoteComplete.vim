@@ -84,7 +84,7 @@ function! s:Complete( quotes, findstart, base )
 	return l:startCol - 1 " Return byte index, not column.
     else
 	" Find matches starting with a:base.
-echomsg '****' string(a:base) string(a:quotes) s:isStartWithQuote s:isEndWithQuote string(s:baseQuote)
+echomsg '****' string(getline('.')) string(a:base) string(a:quotes) s:isStartWithQuote s:isEndWithQuote string(s:baseQuote)
 	let l:quotes = ingo#list#Make(a:quotes)
 
 	let l:matches = []
