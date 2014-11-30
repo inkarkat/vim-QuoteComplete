@@ -1,8 +1,14 @@
 " QuoteComplete.vim: Insert mode completion of quoted strings.
 "
 " DEPENDENCIES:
+"   - CompleteHelper.vim autoload script
+"   - ingo/collections.vim autoload script
+"   - ingo/list QuoteComplete.vim autoload script
+"   - ingo/plugin/setting.vim autoload script
 "
 " Copyright: (C) 2014 Ingo Karkat
+"   The logic in QuoteComplete#FindQuotes() is based on <SID>FindStrings() from
+"   the StringComplete.vim plugin (vimscript #2238) by Peter Hodge.
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -52,7 +58,7 @@ function! s:Complete( quotes, findstart, base )
 	\)
 
 	let [s:isStartWithQuote, s:isEndWithQuote, s:baseQuote] = [0, 0, {}]
-	let l:startCol = searchpos('\%(\%(' . join(l:quotesCharPatterns, '\|') . '\).\{-}\|\k*\)\%#', 'bn', line('.'))[1]
+	let l:startCol = searchpos('\%(\V\%(' . join(l:quotesCharPatterns, '\|') . '\)\m.\{-}\|\k*\)\%#', 'bn', line('.'))[1]
 	if l:startCol == 0
 	    let l:startCol = col('.')
 	else
@@ -61,14 +67,14 @@ function! s:Complete( quotes, findstart, base )
 
 	    for l:idx in range(len(l:quotesCharPatterns))   " Test each pattern individually to be able to test with the same (end) char pattern at the end; with this we can support different begin- and end- characters for a quote (e.g. typographical ones).
 		let [l:pattern, l:endPattern] = [l:quotesCharPatterns[l:idx], l:quotesEndCharPatterns[l:idx]]
-		if l:quotedBase =~ '^' . l:pattern
+		if l:quotedBase =~ '\V\^' . l:pattern
 		    let s:isStartWithQuote = 1
 		    let s:baseQuote = l:quotesConfig[l:idx]
 
 		    " Reduce the base to exclude the quote.
 		    let l:startCol += len(matchstr(l:quotedBase, l:pattern))
 
-		    if l:textAfterCursor =~ '^' . l:endPattern
+		    if l:textAfterCursor =~ '\V\^' . l:endPattern
 			let s:isEndWithQuote = 1
 		    endif
 		    break
@@ -80,23 +86,22 @@ function! s:Complete( quotes, findstart, base )
 	" Find matches starting with a:base.
 echomsg '****' string(a:base) string(a:quotes) s:isStartWithQuote s:isEndWithQuote string(s:baseQuote)
 	let l:quotes = ingo#list#Make(a:quotes)
-	let l:base = '\V' . escape(a:base, '\')
 
 	let l:matches = []
 	call CompleteHelper#Find(l:matches, function('QuoteComplete#FindQuotes'), {
 	\   'complete': s:GetCompleteOption(),
-	\   'base' : '^\%(' . join(map(copy(l:quotes), 'v:val.char'), '\|') . '\)' . l:base,
+	\   'base' : '\V\^\%(' . join(map(copy(l:quotes), 'v:val.char'), '\|') . '\)' . escape(a:base, '\'),
 	\   'quotes': l:quotes
 	\})
 
-	if empty(l:matches)
+	if empty(l:matches) && ! empty(a:base)
 	    echohl ModeMsg
 	    echo '-- User defined completion (^U^N^P) -- Anywhere search...'
 	    echohl None
 
 	    call CompleteHelper#Find(l:matches, function('QuoteComplete#FindQuotes'), {
 	    \   'complete': s:GetCompleteOption(),
-	    \   'base' : l:base,
+	    \   'base' : '\V' . escape(a:base, '\'),
 	    \   'quotes': l:quotes
 	    \})
 	endif
@@ -113,7 +118,7 @@ function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isIn
 	    let l:col = 0
 
 	    while l:col < l:lineLen
-		let l:quoteCol = match(l:line, l:quote.char, l:col)
+		let l:quoteCol = match(l:line, '\V' . l:quote.char, l:col)
 		if l:quoteCol == -1
 		    break
 		endif
@@ -130,7 +135,7 @@ function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isIn
 		endif
 
 		if s:isStartWithQuote
-		    let l:quotedString = matchstr(l:quotedString, '^\%(' . l:quote.char . '\)\zs.*\ze\%(' . l:quote.char . '\)$')
+		    let l:quotedString = matchstr(l:quotedString, '\V\^\%(' . l:quote.char . '\)\zs\.\*\ze\%(' . s:GetEndChar(l:quote) . '\)\$')
 
 		    if ! s:isEndWithQuote
 			" The original end quote has been removed; add the
