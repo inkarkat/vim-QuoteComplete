@@ -113,41 +113,45 @@ endfunction
 function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isInCompletionBuffer )
     for l:line in (empty(a:lines) ? s:GetCurrentLines(a:options) : a:lines)
 	let l:lineLen = len(l:line)
+	let l:startCols = [0]
+	while ! empty(l:startCols)
+	    let l:startCol = remove(l:startCols, 0)
+	    for l:quote in a:options.quotes
+		let l:col = l:startCol
 
-	for l:quote in a:options.quotes
-	    let l:col = 0
-
-	    while l:col < l:lineLen
-		let l:quoteCol = match(l:line, '\V' . l:quote.char, l:col)
-		if l:quoteCol == -1
-		    break
-		endif
-
-		let l:quotedString = matchstr(l:line, l:quote.pattern, l:quoteCol)
-		if l:quotedString == ''
-		    break
-		endif
-
-		let l:col = l:quoteCol + len(l:quotedString)
-
-		if l:quotedString !~# a:options.base
-		    continue
-		endif
-
-		if s:isStartWithQuote
-		    let l:quotedString = matchstr(l:quotedString, '\V\^\%(' . l:quote.char . '\)\zs\.\*\ze\%(' . s:GetEndChar(l:quote) . '\)\$')
-
-		    if ! s:isEndWithQuote
-			" The original end quote has been removed; add the
-			" configured end char for the actual match.
-			let l:quotedString .= s:GetEndChar(s:baseQuote)
+		while l:col < l:lineLen
+		    let l:quoteCol = match(l:line, '\V' . l:quote.char, l:col)
+		    if l:quoteCol == -1
+			break
 		    endif
-		endif
 
-		let l:matchObj = copy(a:matchTemplate)
-		call CompleteHelper#AddMatch(a:matches, l:matchObj, l:quotedString, a:options)
-	    endwhile
-	endfor
+		    let l:quotedString = matchstr(l:line, l:quote.pattern, l:quoteCol)
+		    if l:quotedString == ''
+			break
+		    endif
+
+		    let l:col = l:quoteCol + len(l:quotedString)
+		    call add(l:startCols, l:col)
+		    if l:quotedString !~# a:options.base
+			break
+		    endif
+
+		    if s:isStartWithQuote
+			let l:quotedString = matchstr(l:quotedString, '\V\^\%(' . l:quote.char . '\)\zs\.\*\ze\%(' . s:GetEndChar(l:quote) . '\)\$')
+
+			if ! s:isEndWithQuote
+			    " The original end quote has been removed; add the
+			    " configured end char for the actual match.
+			    let l:quotedString .= s:GetEndChar(s:baseQuote)
+			endif
+		    endif
+
+		    let l:matchObj = copy(a:matchTemplate)
+		    call CompleteHelper#AddMatch(a:matches, l:matchObj, l:quotedString, a:options)
+		    break
+		endwhile
+	    endfor
+	endwhile
     endfor
 endfunction
 function! s:GetEndChar( quote )
