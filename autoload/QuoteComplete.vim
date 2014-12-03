@@ -2,6 +2,7 @@
 "
 " DEPENDENCIES:
 "   - CompleteHelper.vim autoload script
+"   - Complete/Repeat.vim autoload script
 "   - ingo/collections.vim autoload script
 "   - ingo/list QuoteComplete.vim autoload script
 "   - ingo/plugin/setting.vim autoload script
@@ -19,10 +20,12 @@
 "				quote searches after a quote was found. This
 "				avoids missing quotes when there are unbalanced
 "				quote chars inside another quote type.
+"				Implement repeat.
 "	001	27-Nov-2014	file creation
 let s:save_cpo = &cpo
 set cpo&vim
 
+let s:repeatCnt = 0
 function! s:GetCompleteOption()
     return (exists('b:QuoteComplete_complete') ? b:QuoteComplete_complete : g:QuoteComplete_complete)
 endfunction
@@ -46,13 +49,47 @@ function! QuoteComplete#Any( findstart, base )
 endfunction
 
 function! s:Complete( quotes, findstart, base )
+    if s:repeatCnt
+	if a:findstart
+	    return col('.') - 1
+	else
+	    " First try to find another quote after the previous one.
+	    " handle interjacent glue text like ", " or ": ".
+	    let l:betweenQuotesExpr = '\S\{-}\s*'
+
+	    " Need to translate the embedded ^@ newline into the \n atom.
+	    let l:previousCompleteExpr = '\V' . substitute(escape(s:fullText, '\'), '\n', '\\n', 'g') . '\m'
+	    let l:nextQuotePatterns =
+	    \   join(
+	    \       map(s:GetAllConfigs(), 'v:val.pattern'),
+	    \       '\|'
+	    \   )
+
+	    let l:matches = []
+	    call CompleteHelper#FindMatches(l:matches,
+	    \   l:previousCompleteExpr . '\zs' . l:betweenQuotesExpr . '\%(' . l:nextQuotePatterns . '\)',
+	    \   {'complete': s:GetCompleteOption(), 'processor': function('CompleteHelper#Repeat#Processor')}
+	    \)
+	    if empty(l:matches)
+		" Fall back to complete keywords like the default completion.
+		let l:nextKeywordPattern = CompleteHelper#Repeat#GetPattern(s:fullText, '')
+		call CompleteHelper#FindMatches(l:matches,
+		\   l:nextKeywordPattern,
+		\   {'complete': s:GetCompleteOption(), 'processor': function('CompleteHelper#Repeat#Processor')}
+		\)
+
+		if empty(l:matches)
+		    call CompleteHelper#Repeat#Clear()
+		endif
+	    endif
+
+	    return l:matches
+	endif
+    endif
+
     if a:findstart
 	" Locate the start of the quoted text (any possible quote) or keyword.
-	let l:quotesConfig = ingo#collections#Flatten1([
-	\   ingo#plugin#setting#GetBufferLocal('QuoteComplete_Single', g:QuoteComplete_Single),
-	\   ingo#plugin#setting#GetBufferLocal('QuoteComplete_Double', g:QuoteComplete_Double),
-	\   ingo#plugin#setting#GetBufferLocal('QuoteComplete_Any', g:QuoteComplete_Any),
-	\])
+	let l:quotesConfig = s:GetAllConfigs()
 	let l:quotesCharPatterns = map(
 	\   copy(l:quotesConfig),
 	\   'v:val.char'
@@ -167,6 +204,13 @@ function! QuoteComplete#FindQuotes( lines, matches, matchTemplate, options, isIn
 	endwhile
     endfor
 endfunction
+function! s:GetAllConfigs()
+    return ingo#collections#Flatten1([
+    \   ingo#plugin#setting#GetBufferLocal('QuoteComplete_Single', g:QuoteComplete_Single),
+    \   ingo#plugin#setting#GetBufferLocal('QuoteComplete_Double', g:QuoteComplete_Double),
+    \   ingo#plugin#setting#GetBufferLocal('QuoteComplete_Any', g:QuoteComplete_Any),
+    \])
+endfunction
 function! s:GetEndChar( quote )
     return (has_key(a:quote, 'endChar') ? a:quote.endChar : a:quote.char)
 endfunction
@@ -186,6 +230,10 @@ endfunction
 
 function! QuoteComplete#Expr( completionFunction )
     let &completefunc = a:completionFunction
+
+    let s:repeatCnt = 0 " Important!
+    let [s:repeatCnt, l:addedText, s:fullText] = CompleteHelper#Repeat#TestForRepeat()
+
     return "\<C-x>\<C-u>"
 endfunction
 
