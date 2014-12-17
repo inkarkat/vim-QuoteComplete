@@ -15,6 +15,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.003	04-Dec-2014	BUG: l:anyFallback isn't used when
+"				g:QuoteComplete_Any exists; need explicit
+"				condition on buffer-local variable only.
 "	002	01-Dec-2014	Change search logic in
 "				QuoteComplete#FindQuotes() to restart _all_
 "				quote searches after a quote was found. This
@@ -45,7 +48,7 @@ function! QuoteComplete#Any( findstart, base )
 	\] + g:QuoteComplete_Any[2:]
     endif
 
-    return s:Complete(ingo#plugin#setting#GetBufferLocal('QuoteComplete_Any', l:anyFallback), a:findstart, a:base)
+    return s:Complete((exists('b:QuoteComplete_Any') ? b:QuoteComplete_Any : l:anyFallback), a:findstart, a:base)
 endfunction
 
 function! s:Complete( quotes, findstart, base )
