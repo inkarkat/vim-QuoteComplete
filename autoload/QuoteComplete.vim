@@ -4,7 +4,7 @@
 "   - CompleteHelper.vim autoload script
 "   - Complete/Repeat.vim autoload script
 "   - ingo/collections.vim autoload script
-"   - ingo/list QuoteComplete.vim autoload script
+"   - ingo/list.vim autoload script
 "   - ingo/plugin/setting.vim autoload script
 "
 " Copyright: (C) 2014 Ingo Karkat
@@ -15,6 +15,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.004	18-Dec-2014	Abbreviate match word; the quoted texts may be
+"				quite long.
 "   1.00.003	04-Dec-2014	BUG: l:anyFallback isn't used when
 "				g:QuoteComplete_Any exists; need explicit
 "				condition on buffer-local variable only.
@@ -71,14 +73,14 @@ function! s:Complete( quotes, findstart, base )
 	    let l:matches = []
 	    call CompleteHelper#FindMatches(l:matches,
 	    \   l:previousCompleteExpr . '\zs' . l:betweenQuotesExpr . '\%(' . l:nextQuotePatterns . '\)',
-	    \   {'complete': s:GetCompleteOption(), 'processor': function('CompleteHelper#Repeat#Processor')}
+	    \   {'complete': s:GetCompleteOption(), 'processor': function('CompleteHelper#Repeat#Processor'), 'abbreviate': 1}
 	    \)
 	    if empty(l:matches)
 		" Fall back to complete keywords like the default completion.
 		let l:nextKeywordPattern = CompleteHelper#Repeat#GetPattern(s:fullText, '')
 		call CompleteHelper#FindMatches(l:matches,
 		\   l:nextKeywordPattern,
-		\   {'complete': s:GetCompleteOption(), 'processor': function('CompleteHelper#Repeat#Processor')}
+		\   {'complete': s:GetCompleteOption(), 'processor': function('CompleteHelper#Repeat#Processor'), 'abbreviate': 1}
 		\)
 
 		if empty(l:matches)
@@ -134,6 +136,7 @@ function! s:Complete( quotes, findstart, base )
 	let l:matches = []
 	call CompleteHelper#Find(l:matches, function('QuoteComplete#FindQuotes'), {
 	\   'complete': s:GetCompleteOption(),
+	\   'abbreviate': 1,
 	\   'base' : '\V\^\%(' . join(map(copy(l:quotes), 'v:val.char'), '\|') . '\)' . escape(a:base, '\'),
 	\   'quotes': l:quotes
 	\})
@@ -145,6 +148,7 @@ function! s:Complete( quotes, findstart, base )
 
 	    call CompleteHelper#Find(l:matches, function('QuoteComplete#FindQuotes'), {
 	    \   'complete': s:GetCompleteOption(),
+	    \   'abbreviate': 1,
 	    \   'base' : '\V' . escape(a:base, '\'),
 	    \   'quotes': l:quotes
 	    \})
