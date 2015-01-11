@@ -15,6 +15,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.005	20-Dec-2014	BUG: cursor end-anchored search for start of
+"				base cannot use .\{-} to consume as few as
+"				possible to the left, as matching always starts
+"				from the left. Need to use [...][^...]* instead.
 "   1.00.004	18-Dec-2014	Abbreviate match word; the quoted texts may be
 "				quite long.
 "   1.00.003	04-Dec-2014	BUG: l:anyFallback isn't used when
@@ -105,7 +109,8 @@ function! s:Complete( quotes, findstart, base )
 	\)
 
 	let [s:isStartWithQuote, s:isEndWithQuote, s:baseQuote] = [0, 0, {}]
-	let l:startCol = searchpos('\%(\V\%(' . join(l:quotesCharPatterns, '\|') . '\)\m.\{-}\|\k*\)\%#', 'bn', line('.'))[1]
+	let l:quotesCharPattern = '\%(' . join(l:quotesCharPatterns, '\|') . '\)'
+	let l:startCol = searchpos('\V\%(' . l:quotesCharPattern . '\%(' . l:quotesCharPattern . '\@!\.\)\*\|\k\*\)\%#', 'bn', line('.'))[1]
 	if l:startCol == 0
 	    let l:startCol = col('.')
 	else
