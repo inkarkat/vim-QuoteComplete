@@ -46,6 +46,9 @@ CTRL-X '		Find matches for single-quoted strings starting with
 			quote, or just the keyword before the cursor. Existing
 			quotes around the cursor will be kept and preferred
 			over the ones in the matched string.
+			Further use of CTRL-X ' will copy the following quote
+			(separated by whitespace or glue characters), or the
+			next keyword.
 							      *i_CTRL-X_quote*
 CTRL-X "		Same, but for double-quoted strings.
 								  *i_CTRL-X_`*
