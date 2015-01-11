@@ -10,7 +10,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"	001	27-Nov-2014	file creation
+"   1.00.001	27-Nov-2014	file creation
 
 " Avoid installing twice or when in unsupported Vim version.
 if exists('g:loaded_QuoteComplete') || (v:version < 700)
@@ -18,23 +18,50 @@ if exists('g:loaded_QuoteComplete') || (v:version < 700)
 endif
 let g:loaded_QuoteComplete = 1
 
+"- functions -------------------------------------------------------------------
+
+function! s:MakeEscaped( char, ... )
+    if a:0
+	return {
+	\   'char': a:char,
+	\   'endChar': a:1,
+	\   'pattern': a:char . '\%(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\\.\|[^' . a:char . a:1 . ']\)\{-}' . a:1
+	\}
+    else
+	return {
+	\   'char': a:char,
+	\   'pattern': a:char . '\%(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\\.\|[^' . a:char . ']\)\{-}' . a:char
+	\}
+    endif
+endfunction
+
+
+
 "- configuration ---------------------------------------------------------------
 
 if ! exists('g:QuoteComplete_complete')
     let g:QuoteComplete_complete = '.,w,b'
-    let g:QuoteComplete_complete = '.' "TODO
 endif
 
 if ! exists('g:QuoteComplete_Single')
-    let g:QuoteComplete_Single = {'char': "'", 'pattern': '''\%(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\\.\|[^'']\)\{-}'''}
+    let g:QuoteComplete_Single = s:MakeEscaped("'")
 endif
 if ! exists('g:QuoteComplete_Double')
-    let g:QuoteComplete_Double = {'char': '"', 'pattern': '"\%(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\\.\|[^"]\)\{-}"'}
+    let g:QuoteComplete_Double = s:MakeEscaped('"')
 endif
 if ! exists('g:QuoteComplete_Any')
-    let g:QuoteComplete_Any = [g:QuoteComplete_Single, g:QuoteComplete_Double, {'char': '`', 'pattern': '`\%(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\\.\|[^`]\)\{-}`'}]
+    let g:QuoteComplete_Any = [
+    \   g:QuoteComplete_Single,
+    \   g:QuoteComplete_Double,
+    \   s:MakeEscaped('`'),
+    \   s:MakeEscaped("\u0091", "\u0092"),
+    \   s:MakeEscaped("\u2018", "\u2019"),
+    \   s:MakeEscaped("\u201a", "\u2019"),
+    \   s:MakeEscaped("\u201c", "\u201d"),
+    \   s:MakeEscaped("\u201e", "\u201d"),
+    \]
 endif
-
+delfunction s:MakeEscaped
 
 
 "- mappings --------------------------------------------------------------------
