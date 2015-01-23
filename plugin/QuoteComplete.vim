@@ -4,12 +4,15 @@
 "   - Requires Vim 7.0 or higher.
 "   - QuoteComplete.vim autoload script
 "
-" Copyright: (C) 2014 Ingo Karkat
+" Copyright: (C) 2014-2015 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.002	12-Jan-2015	Remove default g:QuoteComplete_complete
+"				configuration and default to 'complete' option
+"				value instead.
 "   1.00.001	27-Nov-2014	file creation
 
 " Avoid installing twice or when in unsupported Vim version.
@@ -38,10 +41,6 @@ endfunction
 
 
 "- configuration ---------------------------------------------------------------
-
-if ! exists('g:QuoteComplete_complete')
-    let g:QuoteComplete_complete = '.,w,b'
-endif
 
 if ! exists('g:QuoteComplete_Single')
     let g:QuoteComplete_Single = s:MakeEscaped("'")
