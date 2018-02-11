@@ -5,6 +5,7 @@ view QuoteComplete.txt
 new
 
 call SetCompletion("\<C-x>\"")
+call SetCompleteExpr('QuoteComplete#Expr("QuoteComplete#Double")')
 
 call InsertRepeat('my "meet', 0, 0, 0, 0, 0, 0)
 call InsertRepeat('my "meet', 0, 0, 0, 0, 0)
