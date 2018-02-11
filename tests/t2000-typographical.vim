@@ -1,6 +1,7 @@
 " Test completion of typographically quoted strings.
 
 scriptencoding utf-8
+set encoding=utf-8
 
 edit ++enc=utf-8 typographical.txt
 
