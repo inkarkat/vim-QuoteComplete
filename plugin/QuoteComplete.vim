@@ -10,6 +10,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.003	24-Jan-2015	Add more Unicode quotation marks for any
+"				completion. Now only when 'encoding' is utf-8.
 "   1.00.002	12-Jan-2015	Remove default g:QuoteComplete_complete
 "				configuration and default to 'complete' option
 "				value instead.
@@ -54,11 +56,19 @@ if ! exists('g:QuoteComplete_Any')
     \   g:QuoteComplete_Double,
     \   s:MakeEscaped('`'),
     \   s:MakeEscaped("\u0091", "\u0092"),
-    \   s:MakeEscaped("\u2018", "\u2019"),
-    \   s:MakeEscaped("\u201a", "\u2019"),
-    \   s:MakeEscaped("\u201c", "\u201d"),
-    \   s:MakeEscaped("\u201e", "\u201d"),
+    \   s:MakeEscaped("\u00ab", "\u00bb"),
     \]
+
+    if &encoding ==# 'utf-8'
+	let g:QuoteComplete_Any += [
+	\   s:MakeEscaped("\u2018", "\u2019"),
+	\   s:MakeEscaped("\u201a", "\u2019"),
+	\   s:MakeEscaped("\u201c", "\u201d"),
+	\   s:MakeEscaped("\u201e", "\u201d"),
+	\   s:MakeEscaped("\u275b", "\u275c"),
+	\   s:MakeEscaped("\u275d", "\u275e"),
+	\]
+    endif
 endif
 delfunction s:MakeEscaped
 
