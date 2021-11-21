@@ -70,6 +70,8 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES					  *QuoteComplete-dependencies*
 
 - Requires Vim 7.0 or higher.
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.010 or
+  higher.
 - Requires the |CompleteHelper.vim| plugin (vimscript #3914), version 1.50 or
   higher.
 
@@ -78,13 +80,12 @@ CONFIGURATION					 *QuoteComplete-configuration*
 
 For a permanent configuration, put the following commands into your |vimrc|:
 			 *b:QuoteComplete_complete* *g:QuoteComplete_complete*
-Analoguous to the 'complete' option, you can specify which buffers will be
-scanned for completion candidates. Currently, '.' (current buffer), 'w'
-(buffers from other windows), and 'b' (other listed buffers) are supported. >
-    let g:QuoteComplete_complete = '.,w,b'
-The global setting can be overridden for a particular buffer
-(b:QuoteComplete_complete).
-
+By default, the 'complete' option controls which buffers will be scanned for
+completion candidates. You can override that either for the entire plugin, or
+only for particular buffers; see |CompleteHelper_complete| for supported
+values. >
+    let g:QuoteComplete_complete = '.,w,b,u'
+<
        *b:QuoteComplete_Single* *b:QuoteComplete_Double* *b:QuoteComplete_Any*
        *g:QuoteComplete_Single* *g:QuoteComplete_Double* *g:QuoteComplete_Any*
 The default patterns for quoted strings allow escaping of quotes via a
@@ -134,7 +135,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2014 Ingo Karkat
+Copyright: (C) 2014-2015 Ingo Karkat
 The logic in QuoteComplete#FindQuotes() is based on <SID>FindStrings() from
 the StringComplete.vim plugin (vimscript #2238) by Peter Hodge.
 The VIM LICENSE applies to this plugin; see |copyright|.
