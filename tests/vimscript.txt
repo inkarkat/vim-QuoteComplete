@@ -1,0 +1,6 @@
+let g:test1 = 'simple single quote'
+let g:test2 = "simple double quote"
+file `=string(localtime())`
+let g:test4 = 'escaping in ''single'' quote' . g:test1 . 'concatenated' . '''hi''' . "ho"
+let g:test5 = "other e. in \"double\" quote" . g:test1 . "concatenated" . "\"hi\"" . 'ho'
+let g:test6 = 'misleading \' . g:test1 . 'escape'
