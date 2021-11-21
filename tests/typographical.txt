@@ -1,0 +1,10 @@
+'plain single'
+"plain double"
+`plain backtick`
+special upper ASCII
+‘special single’
+‚special single low’
+“special double”
+„special double low”
+“quirky left-left“
+”quirky right-right”
