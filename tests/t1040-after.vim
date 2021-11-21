@@ -3,7 +3,7 @@
 set completefunc=QuoteComplete#Double
 edit QuoteComplete.txt
 
-source ../helpers/completetest.vim
+runtime tests/helpers/completetest.vim
 call vimtest#StartTap()
 call vimtap#Plan(3)
 
