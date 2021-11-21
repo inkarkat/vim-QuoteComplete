@@ -7,7 +7,7 @@
 "   - ingo/list.vim autoload script
 "   - ingo/plugin/setting.vim autoload script
 "
-" Copyright: (C) 2014 Ingo Karkat
+" Copyright: (C) 2014-2015 Ingo Karkat
 "   The logic in QuoteComplete#FindQuotes() is based on <SID>FindStrings() from
 "   the StringComplete.vim plugin (vimscript #2238) by Peter Hodge.
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -15,6 +15,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.007	12-Jan-2015	Remove default g:QuoteComplete_complete
+"				configuration and default to 'complete' option
+"				value instead.
 "   1.00.005	20-Dec-2014	BUG: cursor end-anchored search for start of
 "				base cannot use .\{-} to consume as few as
 "				possible to the left, as matching always starts
@@ -36,7 +39,7 @@ set cpo&vim
 
 let s:repeatCnt = 0
 function! s:GetCompleteOption()
-    return (exists('b:QuoteComplete_complete') ? b:QuoteComplete_complete : g:QuoteComplete_complete)
+    return ingo#plugin#setting#GetBufferLocal('QuoteComplete_complete', &complete)
 endfunction
 
 function! QuoteComplete#Single( findstart, base )
