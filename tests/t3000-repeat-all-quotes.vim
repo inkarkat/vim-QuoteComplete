@@ -1,6 +1,6 @@
 " Test repeat of quote completion.
 
-source ../helpers/insert.vim
+runtime tests/helpers/insert.vim
 view QuoteComplete.txt
 new
 
