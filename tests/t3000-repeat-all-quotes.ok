@@ -1,0 +1,7 @@
+my "foobar", "fox", 'fooxy', `backticked stuff`, `fock me` Here
+my "foobar", "fox", 'fooxy', `backticked stuff`, `fock me`
+my "foobar", "fox", 'fooxy', `backticked stuff`
+my "foobar", "fox", 'fooxy'
+my "foobar", "fox"
+my "foobar"
+
