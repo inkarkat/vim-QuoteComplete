@@ -1,0 +1,7 @@
+my '\'escaped doubled single\'' and "\"escaped doubled double\"" and `\`escaped doubled backtick\`` "foobar
+my '\'escaped doubled single\'' and "\"escaped doubled double\"" and `\`escaped doubled backtick\``
+my '\'escaped doubled single\'' and "\"escaped doubled double\"" and
+my '\'escaped doubled single\'' and "\"escaped doubled double\""
+my '\'escaped doubled single\'' and
+my '\'escaped doubled single\''
+
