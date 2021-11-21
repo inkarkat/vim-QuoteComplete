@@ -5,7 +5,7 @@ edit vimscript.txt
 
 let b:QuoteComplete_Single = {'pattern': "'[^']\\+'", 'char': "'"}
 
-source ../helpers/completetest.vim
+runtime tests/helpers/completetest.vim
 call vimtest#StartTap()
 call vimtap#Plan(2)
 
