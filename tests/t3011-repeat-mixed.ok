@@ -1,0 +1,7 @@
+my `comment "middle 'inner' one" nesting` congue " overlapping ' text " funny ' is " sed
+my `comment "middle 'inner' one" nesting` congue " overlapping ' text " funny ' is
+my `comment "middle 'inner' one" nesting` congue " overlapping ' text " funny
+my `comment "middle 'inner' one" nesting` congue " overlapping ' text "
+my `comment "middle 'inner' one" nesting` congue
+my `comment "middle 'inner' one" nesting`
+
