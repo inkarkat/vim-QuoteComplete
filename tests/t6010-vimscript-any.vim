@@ -4,7 +4,7 @@ set completefunc=QuoteComplete#Any
 filetype plugin on
 edit +setf\ vim vimscript.txt
 
-source ../helpers/completetest.vim
+runtime tests/helpers/completetest.vim
 call vimtest#StartTap()
 call vimtap#Plan(6)
 
